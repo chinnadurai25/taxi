@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   LayoutDashboard, 
   PlusSquare, 
@@ -8,14 +8,13 @@ import {
   Bell, 
   Settings, 
   ChevronRight,
-  Menu
+  Menu,
+  X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { NavLink } from 'react-router-dom';
 
-const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(true);
-
+const Sidebar = ({ isOpen, setIsOpen }) => {
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
     { name: 'New Booking', path: '/new-booking', icon: <PlusSquare size={20} /> },
@@ -40,38 +39,49 @@ const Sidebar = () => {
         display: 'flex',
         flexDirection: 'column',
         padding: '24px 16px',
-        zIndex: 100,
+        zIndex: 1000,
         transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
       }}
     >
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
-        gap: '12px', 
+        justifyContent: 'space-between',
         marginBottom: '40px',
         padding: '0 8px',
         overflow: 'hidden'
       }}>
-        <div style={{ 
-          width: '32px', 
-          height: '32px', 
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--primary)',
-          flexShrink: 0
-        }}>
-          <Car size={32} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ 
+            width: '32px', 
+            height: '32px', 
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--primary)',
+            flexShrink: 0
+          }}>
+            <Car size={32} />
+          </div>
+          {isOpen && (
+            <motion.h2 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              style={{ fontSize: '20px', fontWeight: '800', color: '#1A1D1F', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}
+            >
+              TaxiAdmin
+            </motion.h2>
+          )}
         </div>
-        {isOpen && (
-          <motion.h2 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            style={{ fontSize: '20px', fontWeight: '800', color: '#1A1D1F', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}
-          >
-            TaxiAdmin
-          </motion.h2>
-        )}
+        
+        {/* Close button for mobile */}
+        <button 
+          className="mobile-only"
+          onClick={() => setIsOpen(false)}
+          style={{ display: window.innerWidth <= 1024 ? 'block' : 'none', color: 'var(--text-muted)' }}
+        >
+          <X size={24} />
+        </button>
       </div>
 
       <nav style={{ flex: 1 }}>
@@ -80,6 +90,9 @@ const Sidebar = () => {
             <li key={item.name}>
               <NavLink
                 to={item.path}
+                onClick={() => {
+                  if (window.innerWidth <= 1024) setIsOpen(false);
+                }}
                 style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
@@ -106,10 +119,11 @@ const Sidebar = () => {
       </nav>
 
       <button 
+        className="desktop-only"
         onClick={() => setIsOpen(!isOpen)}
         style={{
           marginTop: 'auto',
-          display: 'flex',
+          display: window.innerWidth > 1024 ? 'flex' : 'none',
           alignItems: 'center',
           justifyContent: 'center',
           padding: '12px',
@@ -120,8 +134,20 @@ const Sidebar = () => {
       >
         {isOpen ? <Menu size={20} /> : <ChevronRight size={20} />}
       </button>
+      
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 1024px) {
+          .desktop-only { display: none !important; }
+          .mobile-only { display: block !important; }
+          .sidebar { width: 280px !important; }
+        }
+        @media (min-width: 1025px) {
+          .mobile-only { display: none !important; }
+        }
+      `}} />
     </motion.div>
   );
 };
 
 export default Sidebar;
+

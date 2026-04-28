@@ -39,7 +39,10 @@ app.get('/api/stats', async (req, res) => {
 
 app.get('/api/bookings', async (req, res) => {
   try {
-    const bookings = await Booking.find().sort({ date: -1 });
+    const bookings = await Booking.find()
+      .populate('taxi')
+      .populate('driver')
+      .sort({ date: -1 });
     res.json(bookings);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -48,12 +51,39 @@ app.get('/api/bookings', async (req, res) => {
 
 app.get('/api/bookings/recent', async (req, res) => {
   try {
-    const bookings = await Booking.find().sort({ date: -1 }).limit(5);
+    const bookings = await Booking.find()
+      .populate('taxi')
+      .populate('driver')
+      .sort({ date: -1 })
+      .limit(5);
     res.json(bookings);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.patch('/api/bookings/:id/allocate', async (req, res) => {
+  try {
+    const { taxiId, driverId } = req.body;
+    const booking = await Booking.findById(req.params.id);
+    
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+    booking.taxi = taxiId;
+    booking.driver = driverId;
+    booking.status = 'Assigned';
+    await booking.save();
+
+    // Update taxi and driver status
+    await Taxi.findByIdAndUpdate(taxiId, { status: 'On Trip' });
+    await Driver.findByIdAndUpdate(driverId, { status: 'On Trip' });
+
+    res.json(booking);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 
 app.post('/api/bookings', async (req, res) => {
   try {
@@ -75,7 +105,9 @@ app.post('/api/bookings', async (req, res) => {
 // Drivers
 app.get('/api/drivers', async (req, res) => {
   try {
-    const drivers = await Driver.find();
+    const { status } = req.query;
+    const query = status ? { status } : {};
+    const drivers = await Driver.find(query);
     res.json(drivers);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -95,7 +127,9 @@ app.post('/api/drivers', async (req, res) => {
 // Taxis
 app.get('/api/taxis', async (req, res) => {
   try {
-    const taxis = await Taxi.find();
+    const { status } = req.query;
+    const query = status ? { status } : {};
+    const taxis = await Taxi.find(query);
     res.json(taxis);
   } catch (err) {
     res.status(500).json({ error: err.message });

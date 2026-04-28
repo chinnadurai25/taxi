@@ -89,7 +89,7 @@ const Taxis = () => {
                 <button onClick={() => setShowForm(false)} style={{ color: 'var(--text-muted)' }}><X size={20} /></button>
               </div>
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="grid-2-col">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', fontWeight: '600' }}>Model Name</label>
                     <input 
@@ -113,7 +113,7 @@ const Taxis = () => {
                     />
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="grid-2-col">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', fontWeight: '600' }}>Vehicle Type</label>
                     <select 
@@ -140,6 +140,7 @@ const Taxis = () => {
                     </select>
                   </div>
                 </div>
+
                 <button 
                   type="submit"
                   style={{ 
@@ -169,8 +170,8 @@ const Taxis = () => {
           <thead>
             <tr>
               <th>Taxi Info</th>
-              <th>Vehicle Number</th>
-              <th>Type</th>
+              <th>Number</th>
+              <th className="hide-mobile">Type</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -209,7 +210,7 @@ const Taxis = () => {
                       {taxi.taxiNumber}
                     </span>
                   </td>
-                  <td>
+                  <td className="hide-mobile">
                     <div style={{ color: 'var(--text-muted)' }}>{taxi.type}</div>
                   </td>
                   <td>

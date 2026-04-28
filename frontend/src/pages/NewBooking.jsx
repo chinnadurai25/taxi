@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, MapPin, User, Phone } from 'lucide-react';
+import { Send, MapPin, User, Phone, Calendar } from 'lucide-react';
 
 const NewBooking = () => {
   const [formData, setFormData] = useState({
     customer: '',
     phone: '',
     pickup: '',
-    drop: ''
+    drop: '',
+    date: new Date().toISOString().slice(0, 16)
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -29,7 +30,7 @@ const NewBooking = () => {
       if (response.ok) {
         const data = await response.json();
         setMessage({ type: 'success', text: `Booking created successfully! ID: ${data.bookingId}` });
-        setFormData({ customer: '', phone: '', pickup: '', drop: '' });
+        setFormData({ customer: '', phone: '', pickup: '', drop: '', date: new Date().toISOString().slice(0, 16) });
       } else {
         const error = await response.json();
         setMessage({ type: 'error', text: error.error || 'Failed to create booking.' });
@@ -112,6 +113,28 @@ const NewBooking = () => {
                 value={formData.pickup}
                 onChange={handleChange}
                 placeholder="Enter pickup address" 
+                required
+                style={{ 
+                  width: '100%', 
+                  padding: '12px 12px 12px 40px', 
+                  borderRadius: '10px', 
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-main)',
+                  fontSize: '14px'
+                }} 
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>Pickup Date & Time</label>
+            <div style={{ position: 'relative' }}>
+              <Calendar size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
+              <input 
+                type="datetime-local" 
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
                 required
                 style={{ 
                   width: '100%', 

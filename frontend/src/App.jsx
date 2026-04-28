@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -9,37 +9,43 @@ import Drivers from './pages/Drivers';
 import Taxis from './pages/Taxis';
 import './App.css';
 
-const Layout = ({ children }) => {
+const Layout = ({ children, sidebarOpen, setSidebarOpen }) => {
   return (
-    <div className="app-container">
-      <Sidebar />
+    <div className={`app-container ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       <main className="main-content">
-        <Header />
-        {children}
+        <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        <div className="page-content">
+          {children}
+        </div>
       </main>
+      {/* Backdrop for mobile */}
+      {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)}></div>}
     </div>
   );
 };
 
 function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 1024);
   console.log("FlyRoll App Rendering...");
+  
   return (
     <>
       <Routes>
-      <Route path="/" element={<Layout><Dashboard /></Layout>} />
-      <Route path="/new-booking" element={<Layout><NewBooking /></Layout>} />
-      <Route path="/trips" element={<Layout><Trips /></Layout>} />
-      <Route path="/drivers" element={<Layout><Drivers /></Layout>} />
-      <Route path="/taxis" element={<Layout><Taxis /></Layout>} />
+      <Route path="/" element={<Layout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}><Dashboard /></Layout>} />
+      <Route path="/new-booking" element={<Layout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}><NewBooking /></Layout>} />
+      <Route path="/trips" element={<Layout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}><Trips /></Layout>} />
+      <Route path="/drivers" element={<Layout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}><Drivers /></Layout>} />
+      <Route path="/taxis" element={<Layout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}><Taxis /></Layout>} />
       
       {/* Fallback routes for unimplemented features */}
-      <Route path="/notifications" element={<Layout>
+      <Route path="/notifications" element={<Layout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
         <h1 className="section-title">Notifications</h1>
         <p className="section-subtitle">Manage your alerts and notifications</p>
         <div className="card">Coming soon...</div>
       </Layout>} />
       
-      <Route path="/settings" element={<Layout>
+      <Route path="/settings" element={<Layout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
         <h1 className="section-title">Settings</h1>
         <p className="section-subtitle">Configure your application preferences</p>
         <div className="card">Coming soon...</div>
@@ -52,3 +58,4 @@ function App() {
 }
 
 export default App;
+

@@ -89,7 +89,7 @@ const Drivers = () => {
                 <button onClick={() => setShowForm(false)} style={{ color: 'var(--text-muted)' }}><X size={20} /></button>
               </div>
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="grid-2-col">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', fontWeight: '600' }}>Full Name</label>
                     <input 
@@ -113,7 +113,7 @@ const Drivers = () => {
                     />
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="grid-2-col">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', fontWeight: '600' }}>Initial Status</label>
                     <select 
@@ -139,6 +139,7 @@ const Drivers = () => {
                     />
                   </div>
                 </div>
+
                 <button 
                   type="submit"
                   style={{ 
@@ -168,9 +169,9 @@ const Drivers = () => {
           <thead>
             <tr>
               <th>Driver Info</th>
-              <th>Phone</th>
+              <th className="hide-mobile">Phone</th>
               <th>Status</th>
-              <th>Rating</th>
+              <th className="hide-mobile">Rating</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -202,7 +203,7 @@ const Drivers = () => {
                       <div style={{ fontWeight: '600' }}>{driver.name}</div>
                     </div>
                   </td>
-                  <td>
+                  <td className="hide-mobile">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
                       <Phone size={14} />
                       {driver.phone}
@@ -213,7 +214,7 @@ const Drivers = () => {
                       {driver.status}
                     </span>
                   </td>
-                  <td>
+                  <td className="hide-mobile">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#FFB800', fontWeight: '600' }}>
                       <Star size={16} fill="#FFB800" />
                       {driver.rating.toFixed(1)}

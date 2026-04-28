@@ -62,14 +62,15 @@ const Trips = () => {
       <div className="table-container">
         <table>
           <thead>
-            <tr>
-              <th>Booking ID</th>
-              <th>Customer</th>
-              <th>Pickup</th>
-              <th>Drop</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
+             <tr>
+               <th>ID</th>
+               <th>Customer</th>
+               <th>Date/Time</th>
+               <th className="hide-mobile">Pickup</th>
+               <th className="hide-mobile">Drop</th>
+               <th>Status</th>
+               <th>Action</th>
+             </tr>
           </thead>
           <tbody>
             {bookings.length > 0 ? (
@@ -80,8 +81,12 @@ const Trips = () => {
                     <div style={{ fontWeight: '600' }}>{booking.customer}</div>
                     <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{booking.phone}</div>
                   </td>
-                  <td>{booking.pickup}</td>
-                  <td>{booking.drop}</td>
+                  <td style={{ fontSize: '14px', fontWeight: '500' }}>
+                     <div style={{ fontSize: '11px' }}>{new Date(booking.date).toLocaleDateString([], { day: '2-digit', month: 'short' })}</div>
+                     <div style={{ fontWeight: '700' }}>{new Date(booking.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                  </td>
+                  <td className="hide-mobile">{booking.pickup}</td>
+                  <td className="hide-mobile">{booking.drop}</td>
                   <td>
                     <span className={`status-pill status-${booking.status.toLowerCase()}`}>
                       {booking.status}
