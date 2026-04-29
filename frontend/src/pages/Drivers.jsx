@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Phone, Star, MoreVertical, X, UserPlus, Save } from 'lucide-react';
+import { Users, Phone, Star, MoreVertical, X, UserPlus, Save, Trash2 } from 'lucide-react';
 
 const Drivers = () => {
   const [drivers, setDrivers] = useState([]);
@@ -28,6 +28,16 @@ const Drivers = () => {
   useEffect(() => {
     fetchDrivers();
   }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this driver?')) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/drivers/${id}`, { method: 'DELETE' });
+      if (res.ok) fetchDrivers();
+    } catch (err) {
+      console.error('Error deleting driver:', err);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -221,8 +231,22 @@ const Drivers = () => {
                     </div>
                   </td>
                   <td>
-                    <button style={{ color: 'var(--text-muted)' }}>
-                      <MoreVertical size={18} />
+                    <button 
+                      onClick={() => handleDelete(driver._id)}
+                      style={{ 
+                        color: '#FF4D4F', 
+                        background: '#FFF1F0',
+                        border: 'none',
+                        padding: '6px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Delete Driver"
+                    >
+                      <Trash2 size={16} />
                     </button>
                   </td>
                 </tr>

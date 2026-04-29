@@ -7,6 +7,7 @@ import NewBooking from './pages/NewBooking';
 import Trips from './pages/Trips';
 import Drivers from './pages/Drivers';
 import Taxis from './pages/Taxis';
+import Notifications from './pages/Notifications';
 import './App.css';
 
 const Layout = ({ children, sidebarOpen, setSidebarOpen }) => {
@@ -39,11 +40,7 @@ function App() {
       <Route path="/taxis" element={<Layout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}><Taxis /></Layout>} />
       
       {/* Fallback routes for unimplemented features */}
-      <Route path="/notifications" element={<Layout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
-        <h1 className="section-title">Notifications</h1>
-        <p className="section-subtitle">Manage your alerts and notifications</p>
-        <div className="card">Coming soon...</div>
-      </Layout>} />
+      <Route path="/notifications" element={<Layout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}><Notifications /></Layout>} />
       
       <Route path="/settings" element={<Layout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
         <h1 className="section-title">Settings</h1>

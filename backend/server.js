@@ -20,16 +20,23 @@ app.use(express.json());
 // Dashboard Stats
 app.get('/api/stats', async (req, res) => {
   try {
-    const totalBookings = await Booking.countDocuments();
-    const activeTrips = await Booking.countDocuments({ status: 'Pending' });
-    const availableDrivers = await Driver.countDocuments({ status: 'Available' });
-    const availableTaxis = await Taxi.countDocuments({ status: 'Available' });
+    const bookingsTotal = await Booking.countDocuments();
+    const bookingsActive = await Booking.countDocuments({ status: { $in: ['Pending', 'Assigned', 'On Trip'] } });
+    
+    const tripsTotal = await Booking.countDocuments({ status: { $in: ['Assigned', 'On Trip', 'Completed'] } });
+    const tripsActive = await Booking.countDocuments({ status: 'On Trip' });
+    
+    const driversTotal = await Driver.countDocuments();
+    const driversActive = await Driver.countDocuments({ status: 'On Trip' });
+    
+    const taxisTotal = await Taxi.countDocuments();
+    const taxisActive = await Taxi.countDocuments({ status: 'On Trip' });
 
     res.json({
-      totalBookings,
-      activeTrips,
-      availableDrivers,
-      availableTaxis,
+      bookings: { total: bookingsTotal, active: bookingsActive },
+      trips: { total: tripsTotal, active: tripsActive },
+      drivers: { total: driversTotal, active: driversActive },
+      taxis: { total: taxisTotal, active: taxisActive },
       trends: { totalBookings: '+12%' }
     });
   } catch (err) {
@@ -56,6 +63,26 @@ app.get('/api/bookings/recent', async (req, res) => {
       .populate('driver')
       .sort({ date: -1 })
       .limit(5);
+    res.json(bookings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/notifications/upcoming', async (req, res) => {
+  try {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const tomorrowEnd = new Date();
+    tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+    tomorrowEnd.setHours(23, 59, 59, 999);
+
+    const bookings = await Booking.find({
+      date: { $gte: todayStart, $lte: tomorrowEnd },
+      status: { $nin: ['Completed', 'Cancelled'] }
+    }).populate('taxi').populate('driver').sort({ date: 1 });
+
     res.json(bookings);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -124,6 +151,16 @@ app.post('/api/drivers', async (req, res) => {
   }
 });
 
+app.delete('/api/drivers/:id', async (req, res) => {
+  try {
+    const driver = await Driver.findByIdAndDelete(req.params.id);
+    if (!driver) return res.status(404).json({ error: 'Driver not found' });
+    res.json({ message: 'Driver deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Taxis
 app.get('/api/taxis', async (req, res) => {
   try {
@@ -143,6 +180,16 @@ app.post('/api/taxis', async (req, res) => {
     res.status(201).json(newTaxi);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/taxis/:id', async (req, res) => {
+  try {
+    const taxi = await Taxi.findByIdAndDelete(req.params.id);
+    if (!taxi) return res.status(404).json({ error: 'Taxi not found' });
+    res.json({ message: 'Taxi deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

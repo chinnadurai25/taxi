@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Car, MapPin, Wrench, MoreVertical, Plus, X, Save } from 'lucide-react';
+import { Car, MapPin, Wrench, MoreVertical, Plus, X, Save, Trash2 } from 'lucide-react';
 
 const Taxis = () => {
   const [taxis, setTaxis] = useState([]);
@@ -28,6 +28,16 @@ const Taxis = () => {
   useEffect(() => {
     fetchTaxis();
   }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this taxi?')) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/taxis/${id}`, { method: 'DELETE' });
+      if (res.ok) fetchTaxis();
+    } catch (err) {
+      console.error('Error deleting taxi:', err);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -219,8 +229,22 @@ const Taxis = () => {
                     </span>
                   </td>
                   <td>
-                    <button style={{ color: 'var(--text-muted)' }}>
-                      <MoreVertical size={18} />
+                    <button 
+                      onClick={() => handleDelete(taxi._id)}
+                      style={{ 
+                        color: '#FF4D4F', 
+                        background: '#FFF1F0',
+                        border: 'none',
+                        padding: '6px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Delete Taxi"
+                    >
+                      <Trash2 size={16} />
                     </button>
                   </td>
                 </tr>

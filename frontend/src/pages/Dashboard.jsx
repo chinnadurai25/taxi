@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Users, Car, Eye, ArrowUpRight, Plus } from 'lucide-react';
 
-const StatCard = ({ title, value, icon, color }) => {
+const StatCard = ({ title, value, activeValue, icon, color }) => {
   return (
     <motion.div 
       whileHover={{ y: -5 }}
@@ -29,8 +29,22 @@ const StatCard = ({ title, value, icon, color }) => {
       }}>
         {icon}
       </div>
-      <h3 style={{ fontSize: '36px', fontWeight: '800', marginBottom: '8px', color: '#1A1D1F' }}>{value}</h3>
-      <p style={{ color: '#6F767E', fontSize: '15px', fontWeight: '500' }}>{title}</p>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <h3 style={{ fontSize: '36px', fontWeight: '800', marginBottom: '4px', color: '#1A1D1F' }}>{value}</h3>
+        <p style={{ color: '#6F767E', fontSize: '15px', fontWeight: '500', marginBottom: '12px' }}>{title}</p>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '6px',
+          background: `${color}10`,
+          padding: '4px 12px',
+          borderRadius: '20px',
+          width: 'fit-content'
+        }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
+          <span style={{ fontSize: '13px', fontWeight: '700', color: color }}>{activeValue} Active</span>
+        </div>
+      </div>
     </motion.div>
   );
 };
@@ -139,25 +153,29 @@ const Dashboard = () => {
       <div className="dashboard-grid">
         <StatCard 
           title="Total Bookings" 
-          value={stats?.totalBookings || '1,247'} 
+          value={stats?.bookings?.total ?? '...'} 
+          activeValue={stats?.bookings?.active ?? '0'}
           icon={<Calendar size={28} />} 
           color="#3B82F6"
         />
         <StatCard 
-          title="Active Trips" 
-          value={stats?.activeTrips || '23'} 
+          title="Total Trips" 
+          value={stats?.trips?.total ?? '...'} 
+          activeValue={stats?.trips?.active ?? '0'}
           icon={<MapPin size={28} />} 
           color="#FF6B00"
         />
         <StatCard 
-          title="Available Drivers" 
-          value={stats?.availableDrivers || '34'} 
+          title="Total Drivers" 
+          value={stats?.drivers?.total ?? '...'} 
+          activeValue={stats?.drivers?.active ?? '0'}
           icon={<Users size={28} />} 
           color="#10B981"
         />
         <StatCard 
-          title="Available Taxis" 
-          value={stats?.availableTaxis || '42'} 
+          title="Total Taxis" 
+          value={stats?.taxis?.total ?? '...'} 
+          activeValue={stats?.taxis?.active ?? '0'}
           icon={<Car size={28} />} 
           color="#8B5CF6"
         />
