@@ -7,6 +7,11 @@ const Notifications = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showAllocateModal, setShowAllocateModal] = useState(false);
+  const [availableTaxis, setAvailableTaxis] = useState([]);
+  const [availableDrivers, setAvailableDrivers] = useState([]);
+  const [allocation, setAllocation] = useState({ taxiId: '', driverId: '' });
+
 
   const fetchNotifications = async () => {
     try {
@@ -33,6 +38,44 @@ const Notifications = () => {
     setIsModalOpen(false);
     setSelectedBooking(null);
   };
+
+  const openAllocateModal = async (booking) => {
+    setSelectedBooking(booking);
+    setShowAllocateModal(true);
+    setIsModalOpen(false);
+    try {
+      const taxiRes = await fetch('http://localhost:5000/api/taxis?status=Available');
+      const taxis = await taxiRes.json();
+      setAvailableTaxis(taxis);
+
+      const driverRes = await fetch('http://localhost:5000/api/drivers?status=Available');
+      const drivers = await driverRes.json();
+      setAvailableDrivers(drivers);
+    } catch (err) {
+      console.error('Error fetching available resources:', err);
+    }
+  };
+
+  const handleAllocate = async (e) => {
+    e.preventDefault();
+    if (!allocation.taxiId || !allocation.driverId) return;
+    
+    try {
+      const res = await fetch(`http://localhost:5000/api/bookings/${selectedBooking._id}/allocate`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(allocation)
+      });
+      if (res.ok) {
+        setShowAllocateModal(false);
+        setAllocation({ taxiId: '', driverId: '' });
+        fetchNotifications();
+      }
+    } catch (err) {
+      console.error('Error allocating booking:', err);
+    }
+  };
+
 
   return (
     <motion.div
@@ -110,21 +153,42 @@ const Notifications = () => {
                     </div>
                   </div>
                 </div>
-                <button 
-                  onClick={() => openModal(notif)}
-                  style={{ 
-                    padding: '10px 20px', 
-                    borderRadius: '10px', 
-                    border: '1px solid var(--border-color)', 
-                    background: 'white',
-                    fontWeight: '700',
-                    fontSize: '14px',
-                    whiteSpace: 'nowrap',
-                    cursor: 'pointer'
-                  }}
-                >
-                  View Details
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    onClick={() => openModal(notif)}
+                    style={{ 
+                      padding: '10px 20px', 
+                      borderRadius: '10px', 
+                      border: '1px solid var(--border-color)', 
+                      background: 'white',
+                      fontWeight: '700',
+                      fontSize: '14px',
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    View Details
+                  </button>
+                  {(!notif.driver && !notif.taxi) && (
+                    <button 
+                      onClick={() => openAllocateModal(notif)}
+                      style={{ 
+                        padding: '10px 20px', 
+                        borderRadius: '10px', 
+                        border: 'none', 
+                        background: 'var(--primary)',
+                        color: 'white',
+                        fontWeight: '700',
+                        fontSize: '14px',
+                        whiteSpace: 'nowrap',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Allocate
+                    </button>
+                  )}
+                </div>
+
               </div>
             ))
           ) : (
@@ -259,6 +323,98 @@ const Notifications = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {showAllocateModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="card" 
+            style={{ width: '90%', maxWidth: '450px', padding: '32px' }}
+          >
+            <h3 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '8px', color: '#1A1D1F' }}>Allocate Resources</h3>
+            <p style={{ color: '#6F767E', marginBottom: '24px' }}>Assign a car and driver for {selectedBooking?.bookingId}</p>
+            
+            <form onSubmit={handleAllocate} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '14px', fontWeight: '600', color: '#1A1D1F' }}>Available Taxis</label>
+                <select 
+                  required
+                  value={allocation.taxiId}
+                  onChange={(e) => setAllocation({...allocation, taxiId: e.target.value})}
+                  style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', background: '#F8F9FA', fontSize: '14px' }}
+                >
+                  <option value="">Select a Taxi</option>
+                  {availableTaxis.map(taxi => (
+                    <option key={taxi._id} value={taxi._id}>{taxi.model} ({taxi.taxiNumber}) - {taxi.type}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '14px', fontWeight: '600', color: '#1A1D1F' }}>Available Drivers</label>
+                <select 
+                  required
+                  value={allocation.driverId}
+                  onChange={(e) => setAllocation({...allocation, driverId: e.target.value})}
+                  style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', background: '#F8F9FA', fontSize: '14px' }}
+                >
+                  <option value="">Select a Driver</option>
+                  {availableDrivers.map(driver => (
+                    <option key={driver._id} value={driver._id}>{driver.name} - {driver.phone}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                <button 
+                  type="button"
+                  onClick={() => setShowAllocateModal(false)}
+                  style={{ 
+                    flex: 1,
+                    padding: '14px', 
+                    borderRadius: '12px', 
+                    fontWeight: '700',
+                    border: '1px solid var(--border-color)',
+                    background: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  style={{ 
+                    flex: 1,
+                    background: 'var(--primary)', 
+                    color: 'white', 
+                    padding: '14px', 
+                    borderRadius: '12px', 
+                    fontWeight: '700',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Confirm Allocation
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
     </motion.div>
   );
 };

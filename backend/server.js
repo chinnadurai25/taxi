@@ -5,6 +5,8 @@ import cors from 'cors';
 import { Booking } from './models/Booking.js';
 import { Driver } from './models/Driver.js';
 import { Taxi } from './models/Taxi.js';
+import { sendCustomerNotification, sendDriverNotification } from './utils/whatsappService.js';
+
 
 dotenv.config();
 
@@ -96,6 +98,17 @@ app.patch('/api/bookings/:id/allocate', async (req, res) => {
     
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
+    // Verify availability
+    const taxi = await Taxi.findById(taxiId);
+    const driver = await Driver.findById(driverId);
+
+    if (!taxi || taxi.status !== 'Available') {
+      return res.status(400).json({ error: 'Selected taxi is no longer available' });
+    }
+    if (!driver || driver.status !== 'Available') {
+      return res.status(400).json({ error: 'Selected driver is no longer available' });
+    }
+
     booking.taxi = taxiId;
     booking.driver = driverId;
     booking.status = 'Assigned';
@@ -105,16 +118,59 @@ app.patch('/api/bookings/:id/allocate', async (req, res) => {
     await Taxi.findByIdAndUpdate(taxiId, { status: 'On Trip' });
     await Driver.findByIdAndUpdate(driverId, { status: 'On Trip' });
 
+    // Send WhatsApp notifications
+    try {
+      await sendCustomerNotification(booking, taxi, driver);
+      await sendDriverNotification(booking, taxi, driver);
+    } catch (notifErr) {
+      console.error('Notification Error:', notifErr);
+      // We don't fail the request if notifications fail, but we log it
+    }
+
     res.json(booking);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
+// Trip Status Update via WhatsApp Link
+app.get('/api/trips/:id/update-status', async (req, res) => {
+  try {
+    const { status } = req.query;
+    const booking = await Booking.findById(req.params.id);
+    
+    if (!booking) return res.status(404).send('Booking not found');
+
+    if (status === 'On Trip') {
+      booking.status = 'On Trip';
+      if (booking.driver) await Driver.findByIdAndUpdate(booking.driver, { status: 'On Trip' });
+      if (booking.taxi) await Taxi.findByIdAndUpdate(booking.taxi, { status: 'On Trip' });
+    } else if (status === 'Completed') {
+      booking.status = 'Completed';
+      if (booking.driver) await Driver.findByIdAndUpdate(booking.driver, { status: 'Available' });
+      if (booking.taxi) await Taxi.findByIdAndUpdate(booking.taxi, { status: 'Available' });
+    }
+
+    await booking.save();
+    res.send(`
+      <div style="font-family: sans-serif; text-align: center; padding: 50px;">
+        <h1 style="color: #10B981;">Success!</h1>
+        <p>Trip status has been updated to <b>${status}</b>.</p>
+        <p>You can now close this tab.</p>
+      </div>
+    `);
+  } catch (err) {
+    res.status(500).send(`Error: ${err.message}`);
+  }
+});
+
+
+
 
 app.post('/api/bookings', async (req, res) => {
   try {
-    const lastBooking = await Booking.findOne().sort({ date: -1 });
+    const lastBooking = await Booking.findOne().sort({ bookingId: -1 });
+
     const lastId = lastBooking ? parseInt(lastBooking.bookingId.split('-')[1]) : 1000;
     const newBookingId = `BK-${lastId + 1}`;
 
