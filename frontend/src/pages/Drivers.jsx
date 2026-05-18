@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Phone, Star, MoreVertical, X, UserPlus, Save, Trash2 } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const Drivers = () => {
   const [drivers, setDrivers] = useState([]);
@@ -15,7 +16,7 @@ const Drivers = () => {
 
   const fetchDrivers = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/drivers');
+      const res = await fetch(`${API_BASE_URL}/api/drivers`);
       const data = await res.json();
       setDrivers(data);
     } catch (err) {
@@ -32,7 +33,7 @@ const Drivers = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this driver?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/drivers/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE_URL}/api/drivers/${id}`, { method: 'DELETE' });
       if (res.ok) fetchDrivers();
     } catch (err) {
       console.error('Error deleting driver:', err);
@@ -42,7 +43,7 @@ const Drivers = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/drivers', {
+      const res = await fetch(`${API_BASE_URL}/api/drivers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

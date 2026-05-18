@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Bell, User, Menu, Clock, Calendar as CalendarIcon } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const Header = ({ toggleSidebar }) => {
   const [notifications, setNotifications] = useState([]);
@@ -8,7 +9,7 @@ const Header = ({ toggleSidebar }) => {
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/notifications/upcoming');
+      const res = await fetch(`${API_BASE_URL}/api/notifications/upcoming`);
       const data = await res.json();
       setNotifications(data);
     } catch (err) {

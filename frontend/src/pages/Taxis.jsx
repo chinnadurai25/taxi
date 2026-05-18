@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Car, MapPin, Wrench, MoreVertical, Plus, X, Save, Trash2 } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const Taxis = () => {
   const [taxis, setTaxis] = useState([]);
@@ -15,7 +16,7 @@ const Taxis = () => {
 
   const fetchTaxis = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/taxis');
+      const res = await fetch(`${API_BASE_URL}/api/taxis`);
       const data = await res.json();
       setTaxis(data);
     } catch (err) {
@@ -32,7 +33,7 @@ const Taxis = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this taxi?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/taxis/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE_URL}/api/taxis/${id}`, { method: 'DELETE' });
       if (res.ok) fetchTaxis();
     } catch (err) {
       console.error('Error deleting taxi:', err);
@@ -42,7 +43,7 @@ const Taxis = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/taxis', {
+      const res = await fetch(`${API_BASE_URL}/api/taxis`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

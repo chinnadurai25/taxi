@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, MapPin, User, Phone, Calendar } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const NewBooking = () => {
   const [formData, setFormData] = useState({
@@ -19,7 +20,7 @@ const NewBooking = () => {
     setMessage(null);
 
     try {
-      const response = await fetch('http://localhost:5000/api/bookings', {
+      const response = await fetch(`${API_BASE_URL}/api/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

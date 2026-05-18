@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Eye, Calendar, Filter } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const Trips = () => {
   const [bookings, setBookings] = useState([]);
@@ -9,7 +10,7 @@ const Trips = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/bookings');
+        const res = await fetch(`${API_BASE_URL}/api/bookings`);
         const data = await res.json();
         setBookings(data);
       } catch (err) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Users, Car, Eye, ArrowUpRight, Plus } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const StatCard = ({ title, value, activeValue, icon, color }) => {
   return (
@@ -69,11 +70,11 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const statsRes = await fetch('http://localhost:5000/api/stats');
+      const statsRes = await fetch(`${API_BASE_URL}/api/stats`);
       const statsData = await statsRes.json();
       setStats(statsData);
 
-      const bookingsRes = await fetch('http://localhost:5000/api/bookings/recent');
+      const bookingsRes = await fetch(`${API_BASE_URL}/api/bookings/recent`);
       const bookingsData = await bookingsRes.json();
       setBookings(bookingsData);
     } catch (err) {
@@ -90,7 +91,7 @@ const Dashboard = () => {
   const handleQuickBooking = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/bookings', {
+      const res = await fetch(`${API_BASE_URL}/api/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(quickBooking)
@@ -108,11 +109,11 @@ const Dashboard = () => {
     setSelectedBooking(booking);
     setShowAllocateModal(true);
     try {
-      const taxiRes = await fetch('http://localhost:5000/api/taxis?status=Available');
+      const taxiRes = await fetch(`${API_BASE_URL}/api/taxis?status=Available`);
       const taxis = await taxiRes.json();
       setAvailableTaxis(taxis);
 
-      const driverRes = await fetch('http://localhost:5000/api/drivers?status=Available');
+      const driverRes = await fetch(`${API_BASE_URL}/api/drivers?status=Available`);
       const drivers = await driverRes.json();
       setAvailableDrivers(drivers);
     } catch (err) {
@@ -125,7 +126,7 @@ const Dashboard = () => {
     if (!allocation.taxiId || !allocation.driverId) return;
     
     try {
-      const res = await fetch(`http://localhost:5000/api/bookings/${selectedBooking._id}/allocate`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${selectedBooking._id}/allocate`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(allocation)

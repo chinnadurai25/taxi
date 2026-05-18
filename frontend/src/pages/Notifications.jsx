@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Clock, Calendar, MapPin, User, ChevronRight, X, Car } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -15,7 +16,7 @@ const Notifications = () => {
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/notifications/upcoming');
+      const res = await fetch(`${API_BASE_URL}/api/notifications/upcoming`);
       const data = await res.json();
       setNotifications(data);
     } catch (err) {
@@ -44,11 +45,11 @@ const Notifications = () => {
     setShowAllocateModal(true);
     setIsModalOpen(false);
     try {
-      const taxiRes = await fetch('http://localhost:5000/api/taxis?status=Available');
+      const taxiRes = await fetch(`${API_BASE_URL}/api/taxis?status=Available`);
       const taxis = await taxiRes.json();
       setAvailableTaxis(taxis);
 
-      const driverRes = await fetch('http://localhost:5000/api/drivers?status=Available');
+      const driverRes = await fetch(`${API_BASE_URL}/api/drivers?status=Available`);
       const drivers = await driverRes.json();
       setAvailableDrivers(drivers);
     } catch (err) {
@@ -61,7 +62,7 @@ const Notifications = () => {
     if (!allocation.taxiId || !allocation.driverId) return;
     
     try {
-      const res = await fetch(`http://localhost:5000/api/bookings/${selectedBooking._id}/allocate`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${selectedBooking._id}/allocate`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(allocation)
