@@ -5,10 +5,14 @@ import cors from 'cors';
 import { Booking } from './models/Booking.js';
 import { Driver } from './models/Driver.js';
 import { Taxi } from './models/Taxi.js';
-import { sendCustomerNotification, sendDriverNotification } from './utils/whatsappService.js';
+import { Message } from './models/Message.js';
+import { sendCustomerNotification, sendDriverNotification, sendTripClosedMessage, sendBookingConfirmedMessage, initializeWhatsApp } from './utils/whatsappService.js';
 
 
 dotenv.config();
+
+// Initialize WhatsApp client
+initializeWhatsApp();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -165,7 +169,161 @@ app.get('/api/trips/:id/update-status', async (req, res) => {
 });
 
 
+// ── CLOSE TRIP ──────────────────────────────────────────────────────────────
+app.patch('/api/trips/:id/close', async (req, res) => {
+  try {
+    const { km, duration, total } = req.body;
+    const booking = await Booking.findById(req.params.id).populate('driver').populate('taxi');
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
+    booking.status = 'Completed';
+    if (booking.driver) await Driver.findByIdAndUpdate(booking.driver._id, { status: 'Available' });
+    if (booking.taxi) await Taxi.findByIdAndUpdate(booking.taxi._id, { status: 'Available' });
+    await booking.save();
+
+    // Log trip closed message
+    try {
+      await sendTripClosedMessage({
+        bookingId: booking.bookingId,
+        customerName: booking.customer,
+        customerPhone: booking.phone,
+        pickup: booking.pickup,
+        drop: booking.drop,
+        km: km || 0,
+        duration: duration || '0',
+        total: total || 0
+      });
+    } catch (e) { console.error('Close msg error:', e.message); }
+
+    res.json({ success: true, booking });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── MESSAGES INBOX ──────────────────────────────────────────────────────────
+app.get('/api/messages', async (req, res) => {
+  try {
+    const { type, recipient, bookingId } = req.query;
+    const filter = {};
+    if (type) filter.messageType = type;
+    if (recipient) filter.recipient = recipient;
+    if (bookingId) filter.bookingId = bookingId;
+    const messages = await Message.find(filter).sort({ sentAt: -1 }).limit(200);
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/messages/stats', async (req, res) => {
+  try {
+    const total = await Message.countDocuments();
+    const confirmed = await Message.countDocuments({ messageType: 'booking_confirmed' });
+    const assigned = await Message.countDocuments({ messageType: 'trip_assigned' });
+    const closed = await Message.countDocuments({ messageType: 'trip_closed' });
+    res.json({ total, confirmed, assigned, closed });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── BACKFILL: Generate messages for all existing bookings ─────────────────────
+app.post('/api/messages/backfill', async (req, res) => {
+  try {
+    const bookings = await Booking.find().populate('driver').populate('taxi');
+    let created = 0;
+
+    for (const booking of bookings) {
+      // Check if this booking already has messages
+      const existing = await Message.countDocuments({ bookingId: booking.bookingId });
+      if (existing > 0) continue;
+
+      const dateStr = new Date(booking.date).toLocaleString('en-IN', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true
+      });
+      const vehicleType = booking.vehicleType || 'Tavara';
+      const driverName = booking.driver?.name || 'Driver';
+      const driverPhone = booking.driver?.phone || '';
+
+      // 1. Always create booking_confirmed message for customer
+      await Message.create({
+        bookingId: booking.bookingId,
+        recipient: 'customer',
+        recipientName: booking.customer,
+        recipientPhone: booking.phone,
+        messageType: 'booking_confirmed',
+        messageBody: `Hi ${booking.customer}, your Nanban Taxi booking is confirmed.\nPickup: ${booking.pickup}\nDrop: ${booking.drop}\nDate/Time: ${dateStr}\nVehicle Type: ${vehicleType}\nThank you for choosing Nanban Taxi 8015999100.`,
+        pickup: booking.pickup,
+        drop: booking.drop,
+        tripDate: dateStr,
+        vehicleType,
+        sentAt: booking.date
+      });
+      created++;
+
+      // 2. If driver is assigned, create trip_assigned messages
+      if (booking.driver && ['Assigned', 'On Trip', 'Completed'].includes(booking.status)) {
+        // To customer
+        await Message.create({
+          bookingId: booking.bookingId,
+          recipient: 'customer',
+          recipientName: booking.customer,
+          recipientPhone: booking.phone,
+          messageType: 'trip_assigned',
+          messageBody: `Hello ${booking.customer}, your trip from ${booking.pickup} to ${booking.drop} has been assigned.\nDriver: ${driverName} (${driverPhone}).\n- Nanban Taxi`,
+          pickup: booking.pickup,
+          drop: booking.drop,
+          driverName,
+          driverPhone,
+          vehicleType,
+          tripDate: dateStr,
+          sentAt: booking.date
+        });
+        created++;
+
+        // To driver
+        await Message.create({
+          bookingId: booking.bookingId,
+          recipient: 'driver',
+          recipientName: driverName,
+          recipientPhone: driverPhone,
+          messageType: 'trip_assigned',
+          messageBody: `Trip Assigned:\nCustomer: ${booking.customer} (${booking.phone})\nPickup: ${booking.pickup}\nDrop: ${booking.drop}\nTime: ${dateStr}`,
+          pickup: booking.pickup,
+          drop: booking.drop,
+          driverName,
+          driverPhone,
+          vehicleType,
+          tripDate: dateStr,
+          sentAt: booking.date
+        });
+        created++;
+      }
+
+      // 3. If completed, create trip_closed message for customer
+      if (booking.status === 'Completed') {
+        await Message.create({
+          bookingId: booking.bookingId,
+          recipient: 'customer',
+          recipientName: booking.customer,
+          recipientPhone: booking.phone,
+          messageType: 'trip_closed',
+          messageBody: `Hi ${booking.customer}, your trip with ${driverName} is closed.\nKM: –\nDuration: –\nTotal: –`,
+          pickup: booking.pickup,
+          drop: booking.drop,
+          sentAt: booking.date
+        });
+        created++;
+      }
+    }
+
+    res.json({ success: true, messagesCreated: created, bookingsProcessed: bookings.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.post('/api/bookings', async (req, res) => {
   try {
@@ -179,6 +337,26 @@ app.post('/api/bookings', async (req, res) => {
       bookingId: newBookingId
     });
     await newBooking.save();
+
+    // Generate and log the booking confirmed message
+    try {
+      const dateStr = new Date(newBooking.date).toLocaleString('en-IN', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true
+      });
+      await sendBookingConfirmedMessage({
+        bookingId: newBooking.bookingId,
+        customerName: newBooking.customer,
+        customerPhone: newBooking.phone,
+        pickup: newBooking.pickup,
+        drop: newBooking.drop,
+        date: dateStr,
+        vehicleType: newBooking.vehicleType || 'Tavara' // Default to Tavara if not specified
+      });
+    } catch (e) {
+      console.error('Error logging booking confirmed message:', e.message);
+    }
+
     res.status(201).json(newBooking);
   } catch (err) {
     res.status(400).json({ error: err.message });

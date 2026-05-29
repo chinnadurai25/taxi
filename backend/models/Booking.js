@@ -13,6 +13,7 @@ const bookingSchema = new mongoose.Schema({
     enum: ['Pending', 'Assigned', 'On Trip', 'Completed', 'Cancelled'], 
     default: 'Pending' 
   },
+  vehicleType: { type: String },
   date: { type: Date, default: Date.now }
 });
 

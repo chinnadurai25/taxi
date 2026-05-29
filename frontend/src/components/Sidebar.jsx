@@ -9,7 +9,8 @@ import {
   Settings, 
   ChevronRight,
   Menu,
-  X
+  X,
+  MessageSquare
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { NavLink } from 'react-router-dom';
@@ -22,6 +23,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { name: 'Drivers', path: '/drivers', icon: <Users size={20} /> },
     { name: 'Taxis', path: '/taxis', icon: <Car size={20} /> },
     { name: 'Notifications', path: '/notifications', icon: <Bell size={20} /> },
+    { name: 'Messages', path: '/messages', icon: <MessageSquare size={20} /> },
     { name: 'Settings', path: '/settings', icon: <Settings size={20} /> },
   ];
 

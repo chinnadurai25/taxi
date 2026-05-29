@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, MapPin, User, Phone, Calendar } from 'lucide-react';
+import { Send, MapPin, User, Phone, Calendar, Car } from 'lucide-react';
 import API_BASE_URL from '../config';
 
 const NewBooking = () => {
@@ -9,6 +9,7 @@ const NewBooking = () => {
     phone: '',
     pickup: '',
     drop: '',
+    vehicleType: 'Tavara',
     date: new Date().toISOString().slice(0, 16)
   });
   const [loading, setLoading] = useState(false);
@@ -31,7 +32,7 @@ const NewBooking = () => {
       if (response.ok) {
         const data = await response.json();
         setMessage({ type: 'success', text: `Booking created successfully! ID: ${data.bookingId}` });
-        setFormData({ customer: '', phone: '', pickup: '', drop: '', date: new Date().toISOString().slice(0, 16) });
+        setFormData({ customer: '', phone: '', pickup: '', drop: '', vehicleType: 'Tavara', date: new Date().toISOString().slice(0, 16) });
       } else {
         const error = await response.json();
         setMessage({ type: 'error', text: error.error || 'Failed to create booking.' });
@@ -169,6 +170,35 @@ const NewBooking = () => {
                   fontSize: '14px'
                 }} 
               />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>Vehicle Type</label>
+            <div style={{ position: 'relative' }}>
+              <Car size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
+              <select 
+                name="vehicleType"
+                value={formData.vehicleType}
+                onChange={handleChange}
+                required
+                style={{ 
+                  width: '100%', 
+                  padding: '12px 12px 12px 40px', 
+                  borderRadius: '10px', 
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-main)',
+                  fontSize: '14px',
+                  outline: 'none',
+                  appearance: 'none',
+                  cursor: 'pointer'
+                }} 
+              >
+                <option value="Tavara">Tavara</option>
+                <option value="Sedan">Sedan</option>
+                <option value="SUV">SUV</option>
+                <option value="Luxury">Luxury</option>
+              </select>
             </div>
           </div>
 
